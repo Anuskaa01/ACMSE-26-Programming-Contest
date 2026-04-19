@@ -24,7 +24,6 @@ def segment_image(pixels: np.ndarray, threshold: int = THRESHOLD) -> tuple[np.nd
 			if labels[r, c] != -1:
 				continue
 
-			segment_id += 1
 			labels[r, c] = segment_id
 			q.append((r, c))
 
@@ -55,6 +54,8 @@ def segment_image(pixels: np.ndarray, threshold: int = THRESHOLD) -> tuple[np.nd
 					if labels[nr, nc] == -1 and abs(center - int(pixels[nr, nc])) <= threshold:
 						labels[nr, nc] = segment_id
 						q.append((nr, nc))
+
+			segment_id += 1
 
 	return labels, segment_id
 
