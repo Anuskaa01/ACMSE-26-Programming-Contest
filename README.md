@@ -1,161 +1,144 @@
-# ACMSE 2026 Undergraduate Programming Contest: Image Segmentation
+# Grayscale Image Segmentation (BFS)
 
-## Project Overview
-This project is part of the ACMSE 2026 Programming Contest. The goal is to implement an image segmentation algorithm that partitions grayscale images into distinct regions based on pixel intensity similarity.
+This repository contains our solution for grayscale image segmentation using connected components with an intensity threshold. The goal is simple: assign every pixel to exactly one segment based on local similarity.
 
-## The Challenge
-Participants must develop a solution that assigns every pixel in a grayscale image to a **Segment ID** based on local connectivity and a fixed intensity threshold.
+We deliberately kept the implementation lightweight and readable so the logic is easy to verify and reproduce.
 
-This problem emphasizes algorithm design, correctness, and efficiency.
+## Project summary
 
----
+- Core algorithm: Breadth-First Search (BFS) connected-component labeling
+- Neighborhood: 4-directional only (up, down, left, right)
+- Merge rule: $|I(p_1)-I(p_2)| \leq 15$
+- Segment labels: zero-based IDs (0, 1, 2, ...)
+- External segmentation APIs: not used
 
-## Dataset Structure
+## Dataset and outputs
 
-The dataset is provided in the 'contest_dataset/' directory:
+Input folders:
 
-- 'images/': Grayscale PNG images for segmentation
+- [train/images](train/images)
+- [test/images](test/images)
 
-Each image should be processed independently.
+Generated output folders:
 
----
+- [outputs/train](outputs/train): predicted masks for train set
+- [outputs/test](outputs/test): predicted masks for test set
+- [outputs/summary.csv](outputs/summary.csv): per-image summary (size + segment count)
+- [visualizations/train](visualizations/train): side-by-side previews
+- [visualizations/test](visualizations/test): side-by-side previews
 
-## Segmentation Rules & Constraints
+Current run status:
 
-All submissions must strictly follow these rules:
+- Train images processed: 100
+- Test images processed: 50
+- Total processed: 150
+- Summary rows: 151 lines (header + 150 records)
 
-1. **4-Directional Adjacency**  
-   Only consider neighbors in four directions:
-   up, down, left, right  
-   (diagonal connections are NOT allowed)
+## Approach
 
-2. **Intensity Threshold**  
-   Two adjacent pixels belong to the same segment if:
-   
-   |I(P1) - I(P2)| ≤ 15
+Implementation entry point: [segment.py](segment.py)
 
-3. **Unique Assignment**  
-   Every pixel must belong to exactly one segment
+High-level flow:
 
----
+```mermaid
+flowchart TD
+    A[Load grayscale image] --> B[Initialize labels as -1]
+    B --> C[Scan each pixel]
+    C --> D{Pixel unlabeled?}
+    D -- No --> C
+    D -- Yes --> E[Start BFS from pixel]
+    E --> F[Check 4 neighbors]
+    F --> G{abs difference <= 15?}
+    G -- Yes --> H[Assign same segment id]
+    G -- No --> I[Skip neighbor]
+    H --> F
+    I --> F
+    F --> J[BFS complete]
+    J --> K[Increment segment id]
+    K --> C
+    C --> L[Save label PNG + summary row]
+```
 
-## Output Requirements
+Why BFS here?
 
-For each input image, your program must generate:
+- It naturally grows one connected region at a time.
+- It is easy to enforce the exact neighbor rule and threshold rule.
+- It gives predictable, consistent behavior across all images.
 
-1. A segmentation result saved as an image (PNG), where:
-   - Each pixel value represents a Segment ID  
-   - Output image has the same dimensions as input  
+## Correctness notes
 
-2. A summary file (optional) containing:
-   - Total number of segments per image  
+This implementation matches the task constraints directly:
 
----
+1. 4-neighbor adjacency only.
+2. Threshold check is performed when exploring each adjacent pixel.
+3. Every pixel starts unlabeled, then gets assigned exactly once.
+4. IDs are deterministic for a fixed traversal order.
 
-## Submission Requirements
+## Performance
 
-Your GitHub repository must include:
+For an image with $H \times W$ pixels:
 
-1. **Source Code**
-   - Well-organized and documented
-   - Reproducible results
+- Time complexity: $O(HW)$
+- Space complexity: $O(HW)$ (labels + queue in worst case)
 
-2. **Output Results**
-   - A folder containing segmentation outputs for all images  
-   - Filenames must match the input images exactly  
+Measured runtime on this machine for full dataset (150 images):
 
-3. **Project Description**
-   - Description of your approach  
-   - Algorithm used (e.g., BFS, DFS, Union-Find)  
-   - Any optimizations  
+- End-to-end segmentation run: 20.40 seconds
 
-4. **Demo Video (3–5 minutes)**
-   - Brief explanation of your solution  
+Command used:
 
----
+```bash
+/usr/bin/time -p .venv/bin/python segment.py
+```
 
-## Restrictions
+## Visualization pipeline
 
-- **No External AI APIs**
-  (e.g., OpenAI, Gemini, etc.)
+Raw label PNGs are correct but not very human-friendly to inspect, so we added [visualize.py](visualize.py).
 
-- **No Pre-built Segmentation Functions**
-  (e.g., OpenCV watershed, skimage.segmentation)
+What it does:
 
-- **Allowed Libraries**
-  - NumPy  
-  - PIL / Pillow  
-  - Standard Python libraries  
+1. Loads original grayscale image.
+2. Loads matching predicted mask from [outputs/train](outputs/train) or [outputs/test](outputs/test).
+3. Maps each segment ID to a deterministic RGB color.
+4. Writes a side-by-side comparison image.
 
----
+Example:
 
-## Evaluation Criteria
+<table>
+  <tr>
+    <td><img src="train/images/100075.png" alt="Original grayscale image" width="320"></td>
+    <td><img src="visualizations/train/100075.png" alt="Segment visualization" width="320"></td>
+  </tr>
+</table>
 
-- **Correctness (40%)**
-  - Proper application of segmentation rules  
+## How to run
 
-- **Consistency (20%)**
-  - Uniform logic across all images  
-
-- **Efficiency (20%)**
-  - Runtime performance  
-
-- **Code Quality (20%)**
-  - Readability, structure, and documentation  
-
----
-
-## Notes
-
-- Multiple correct solutions may exist  
-- Segment IDs do not need to match a specific numbering scheme  
-- Focus on correctness and clarity of implementation  
-
----
-
-Good luck, and we look forward to your solutions!
-
----
-
-## Implementation in this Repository
-
-We implemented segmentation in `segment.py` using BFS connected components.
-
-1. Load each input image as grayscale
-2. Scan every pixel and start a BFS on unvisited pixels
-3. Grow the component in 4 directions only
-4. Add a neighbor only if the intensity rule holds:
-   - |I(P1) - I(P2)| <= 15
-5. Save a label image with the same filename as the input
-
-### Efficiency
-
-- Time complexity: O(H x W) per image
-- Space complexity: O(H x W)
-
-### Run
-
-From the project root:
+From repository root:
 
 ```bash
 python segment.py
-```
-
-### Generated outputs
-
-- `outputs/train/`: segmentation results for all images in `train/images/`
-- `outputs/test/`: segmentation results for all images in `test/images/`
-- `outputs/summary.csv`: per-image segment counts
-
-### Optional demo visualizations
-
-To generate side-by-side previews (original grayscale | colorized segments):
-
-```bash
 python visualize.py
 ```
 
-Generated files:
+If needed, use virtual environment python explicitly:
 
-- `visualizations/train/`
-- `visualizations/test/`
+```bash
+.venv/bin/python segment.py
+.venv/bin/python visualize.py
+```
+
+## Repository structure
+
+- [segment.py](segment.py): main segmentation script
+- [visualize.py](visualize.py): visualization helper
+- [outputs/summary.csv](outputs/summary.csv): per-image stats
+- [outputs/test](outputs/test): final predicted masks for test set
+
+## Submission checklist
+
+Before submitting the form, verify:
+
+1. Public GitHub repo is accessible.
+2. [outputs/test](outputs/test) contains exactly 50 PNG masks with original filenames.
+3. Final commit link points to the last submission commit.
+4. Demo video link (3-5 min) clearly shows what the project does and how it works.
