@@ -5,7 +5,7 @@ from PIL import Image
 
 
 def build_color_lut(max_id: int) -> np.ndarray:
-	"""Deterministic color table so the same segment id always gets the same color."""
+	"""Determinie color table for the same segment id always gets the same color."""
 	lut = np.zeros((max_id + 1, 3), dtype=np.uint8)
 	ids = np.arange(max_id + 1, dtype=np.int64)
 
