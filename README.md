@@ -1,3 +1,5 @@
+# PROJECT REPORT/DESCRIPTION
+
 # Grayscale Image Segmentation (BFS)
 
 This repository contains our solution for grayscale image segmentation using connected components with an intensity threshold. The goal is simple: assign every pixel to exactly one segment based on local similarity.
@@ -132,13 +134,4 @@ If needed, use virtual environment python explicitly:
 - [segment.py](segment.py): main segmentation script
 - [visualize.py](visualize.py): visualization helper
 - [outputs/summary.csv](outputs/summary.csv): per-image stats
-- [outputs/test](outputs/test): final predicted masks for test set
-
-## Submission checklist
-
-Before submitting the form, verify:
-
-1. Public GitHub repo is accessible.
-2. [outputs/test](outputs/test) contains exactly 50 PNG masks with original filenames.
-3. Final commit link points to the last submission commit.
-4. Demo video link (3-5 min) clearly shows what the project does and how it works.
+- [outputs/test](outputs/test): final predicted masks for test-set
